@@ -60,6 +60,9 @@ public class MainLoop {
 
         // debug
         recording = startRecording();
+        while (!recording) {
+            recording = startRecording();
+        }
 
         // initialization for animation
         waveAnimationLastTime = System.currentTimeMillis();
