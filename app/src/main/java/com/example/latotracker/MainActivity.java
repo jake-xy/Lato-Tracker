@@ -42,9 +42,9 @@ public class MainActivity extends AppCompatActivity {
     private void getMicPermission() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_DENIED) {
             ActivityCompat.requestPermissions(
-                    this,
-                    new String[] {Manifest.permission.RECORD_AUDIO},
-                    MIC_PERMISSION_CODE
+                this,
+                new String[] {Manifest.permission.RECORD_AUDIO},
+                MIC_PERMISSION_CODE
             );
         }
     }

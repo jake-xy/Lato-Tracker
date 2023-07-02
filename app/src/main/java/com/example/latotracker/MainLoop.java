@@ -1,10 +1,16 @@
 package com.example.latotracker;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.media.AudioFormat;
+import android.media.AudioRecord;
 import android.media.MediaRecorder;
+import android.net.rtp.AudioStream;
+import android.support.v4.app.ActivityCompat;
 
 import com.example.latotracker.objects.XFont;
 import com.example.latotracker.utils.Sprites;
@@ -16,6 +22,7 @@ public class MainLoop {
     final double THRESHOLD = 15600, MAXTHRESHOLD = 25000;
 
     MediaRecorder mr;
+    AudioRecord ar;
 
     // for logic
     double lastLatoTime, gap;
@@ -39,8 +46,8 @@ public class MainLoop {
         waveSize = minWaveSize;
 
         // initializing font renderers
-        latoFont =  new XFont(R.drawable.font_sprite_kyokasho_black, waveSize * 0.30);
-        statusFont =  new XFont(R.drawable.font_sprite_kyokasho_black, latoFont.height * 0.25);
+        latoFont = new XFont(R.drawable.font_sprite_kyokasho_black, waveSize * 0.30);
+        statusFont = new XFont(R.drawable.font_sprite_kyokasho_black, latoFont.height * 0.25);
 
         // changing the size of the background image
         int newW = Sprites.background_bokeh.getWidth();
@@ -52,10 +59,10 @@ public class MainLoop {
         }
 
         Sprites.background_bokeh = Bitmap.createScaledBitmap(
-            Sprites.background_bokeh,
-            newW,
-            newH,
-            false
+                Sprites.background_bokeh,
+                newW,
+                newH,
+                false
         );
 
         // debug
@@ -85,10 +92,9 @@ public class MainLoop {
 
             gap = System.currentTimeMillis() - lastLatoTime;
 
-            if (gap >= 10 && gap <= 250) {
+            if (gap >= 70 && gap <= 250) {
                 lato += 1;
-            }
-            else if (gap >= 1000) {
+            } else if (gap >= 1000) {
                 lato = 0;
                 BitmapFactory.Options options = new BitmapFactory.Options();
                 options.inScaled = false;
@@ -97,7 +103,7 @@ public class MainLoop {
             }
 
             // sound wave animation
-            double newWaveSize = minWaveSize + (maxWaveSize - minWaveSize) * amp/MAXTHRESHOLD;
+            double newWaveSize = minWaveSize + (maxWaveSize - minWaveSize) * amp / MAXTHRESHOLD;
             if (newWaveSize > waveSize && recording) {
                 waveSize = newWaveSize;
                 // debug (or optimize. coz this is not optimized)
@@ -120,7 +126,7 @@ public class MainLoop {
         }
 
         // animation thingies
-            // sound wave
+        // sound wave
         double animationTime = System.currentTimeMillis() - waveAnimationLastTime;
 
         if (animationTime >= 1500) {
@@ -128,7 +134,7 @@ public class MainLoop {
         }
 
         if (recording) {
-            waveFrame = (int)((System.currentTimeMillis() - waveAnimationLastTime)/1500 * Sprites.sound_wave_frames.length);
+            waveFrame = (int) ((System.currentTimeMillis() - waveAnimationLastTime) / 1500 * Sprites.sound_wave_frames.length);
         }
 
         if (waveSize > minWaveSize) {
@@ -136,13 +142,11 @@ public class MainLoop {
             // debug (or optimize. coz this is not optimized)
             latoFont.setHeight(waveSize * 0.3);
             statusFont.setHeight(latoFont.height * 0.25);
-        }
-        else {
+        } else {
             waveSize = minWaveSize;
         }
 
     }
-
 
 
     public void draw(Canvas canvas) {
@@ -152,24 +156,42 @@ public class MainLoop {
         canvas.drawBitmap(Sprites.background_bokeh, 0, 0, null);
 
         // counter
-        int y = (int) (Game.screen.h/2 - latoFont.height/2 - latoFont.height*0.10);
-        latoFont.render("" + lato, (int) (Game.screen.w/2 - latoFont.strWidth(""+lato)/2), y, canvas);
+        int y = (int) (Game.screen.h / 2 - latoFont.height / 2 - latoFont.height * 0.10);
+        latoFont.render("" + lato, (int) (Game.screen.w / 2 - latoFont.strWidth("" + lato) / 2), y, canvas);
 
         // status
         String status = recording ? "listening" : "silent";
-        y = (int) (y + latoFont.height + statusFont.height*0.05);
-        statusFont.render(status, (int) (Game.screen.w/2 - statusFont.strWidth(status)/2), y, canvas);
+        y = (int) (y + latoFont.height + statusFont.height * 0.05);
+        statusFont.render(status, (int) (Game.screen.w / 2 - statusFont.strWidth(status) / 2), y, canvas);
 
         // wave thingy
 
         Bitmap bmp = Bitmap.createScaledBitmap(Sprites.sound_wave_frames[waveFrame], (int) waveSize, (int) waveSize, false);
 
         canvas.drawBitmap(
-            bmp,
-            (float) (Game.screen.w/2 - bmp.getWidth()/2),
-            (float) (Game.screen.h/2 - bmp.getHeight()/2),
-        null
+                bmp,
+                (float) (Game.screen.w / 2 - bmp.getWidth() / 2),
+                (float) (Game.screen.h / 2 - bmp.getHeight() / 2),
+                null
         );
+
+    }
+
+
+    public void record() {
+        if (ActivityCompat.checkSelfPermission(Game.context, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+
+        ar = new AudioRecord(
+                MediaRecorder.AudioSource.MIC,
+                44100,
+                AudioFormat.CHANNEL_IN_MONO,
+                AudioFormat.ENCODING_PCM_16BIT,
+                1024 * 2
+        );
+
+        ar.startRecording();
 
     }
 
