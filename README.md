@@ -3,7 +3,7 @@
 How to download ?
 
 go to 
-[a link] (https://github.com/jake-xy/lato-tracker/tree/master/app/release/app-release.apk)
+https://github.com/jake-xy/lato-tracker/tree/master/app/release/app-release.apk
 and downlaod the apk
 
 
